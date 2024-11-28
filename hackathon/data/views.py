@@ -8,4 +8,4 @@ from data.serializer import ClientSerializer
 # Create your views here.
 class TestView(generics.ListAPIView):
     serializer_class = ClientSerializer
-    queryset = Client.objects.all()
+    queryset = Client.objects.all()[:50]

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-q47g23uq!v!*w_irhtp^_31ahejwt9ug)p171_1wt^jxr$i7g9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['6e9b-176-59-78-220.ngrok-free.app']
+ALLOWED_HOSTS = ['bf3b-176-59-74-154.ngrok-free.app']
 
 
 # Application definition
@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'authorization',
     'parsers',
-    'data'
+    'data',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +138,9 @@ CLIENTS_URL=os.getenv('CLIENTS_URL')
 ADDRESS_URL=os.getenv('ADDRESS_URL')
 PACKAGE_CHANNEL_URL=os.getenv('PACKAGE_CHANNEL_URL')
 ACTIVITIES_URL=os.getenv('ACTIVITIES_URL')
+# settings.py
+SECURE_SSL_REDIRECT = True  # Enforces HTTPS
+SECURE_HSTS_SECONDS = 3600  # HTTP Strict Transport Security
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
