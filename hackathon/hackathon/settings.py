@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-q47g23uq!v!*w_irhtp^_31ahejwt9ug)p171_1wt^jxr$i7g9
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://bf3b-176-59-74-154.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['http://51.250.42.129']
 
 
 # Application definition
@@ -47,7 +47,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'hackathon.middlewares.TestMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
