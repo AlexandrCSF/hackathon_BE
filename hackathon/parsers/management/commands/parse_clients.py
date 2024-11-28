@@ -1,11 +1,11 @@
 from django.core.management import BaseCommand
 
-from parsers.parser import Parser
+from parsers.clientparser import ClientParser
 
 
 class Command(BaseCommand):
     help = 'fill database'
 
     def handle(self, *args, **options):
-        parser = Parser()
+        parser = ClientParser()
         parser.fill()

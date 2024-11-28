@@ -15,7 +15,7 @@ class Client(models.Model):
     gender = models.BooleanField(null=True)
     age_min = models.IntegerField()
     age_max = models.IntegerField()
-    address = models.ForeignKey(AddressModel, on_delete=models.CASCADE)
+    address = models.ForeignKey(AddressModel, on_delete=models.CASCADE,null=True)
 
 
 class ChannelPackege(models.Model):
