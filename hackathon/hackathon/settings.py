@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+FILES_DIR = BASE_DIR / 'upload'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'authorization',
+    'parsers'
 ]
 
 MIDDLEWARE = [
@@ -129,3 +130,8 @@ DEFAULT_FROM_EMAIL = os.getenv('EMAIL')
 EMAIL_HOST_USER = os.getenv('EMAIL')
 EMAIL_HOST_PASSWORD = os.getenv('PASSWORD')
 EMAIL_USE_TLS = True
+
+CLIENTS_URL=os.getenv('CLIENTS_URL')
+ADDRESS_URL=os.getenv('ADDRESS_URL')
+PACKAGE_CHANNEL_URL=os.getenv('PACKAGE_CHANNEL_URL')
+ACTIVITIES_URL=os.getenv('ACTIVITIES_URL')
