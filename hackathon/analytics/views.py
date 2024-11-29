@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.db.models import Q, Count
 from rest_framework import serializers
@@ -9,13 +11,13 @@ from data.models import TVShow
 
 
 class RequestSerializer(serializers.Serializer):
-    start_time = serializers.DateField(required=False)
-    finish_time = serializers.DateField(required=False)
+    start_time = serializers.TimeField(required=False)
+    finish_time = serializers.TimeField(required=False)
     age_max = serializers.IntegerField(required=False)
     age_min = serializers.IntegerField(required=False)
     categories = serializers.ListSerializer(child=serializers.CharField(), required=False)
     sort_by_choices = ['most_watched, watch_time', 'start_time']
-    sort_by = serializers.ChoiceField(choices=sort_by_choices)
+    sort_by = serializers.ChoiceField(choices=sort_by_choices,required=False)
 
 
 class TVShowSerializer(serializers.ModelSerializer):
@@ -40,9 +42,16 @@ class BaseMostViewedTVShowsView(APIView):
         q = Q()
 
         if data.get('start_time'):
-            q &= Q(viewing__start_time__gte=data.get('start_time'))
+            start_time_str = data.get('start_time')
+            start_time = datetime.strptime(start_time_str, '%H:%M:%S').time()
+            q &= Q(viewing__start_time__hour__gte=start_time.hour, viewing__start_time__minute__gte=start_time.minute)
+
         if data.get('finish_time'):
-            q &= Q(viewing__finish_time__lte=data.get('finish_time'))
+            finish_time_str = data.get('finish_time')
+            finish_time = datetime.strptime(finish_time_str, '%H:%M:%S').time()
+            q &= Q(viewing__finish_time__hour__lte=finish_time.hour,
+                   viewing__finish_time__minute__lte=finish_time.minute)
+
 
         if data.get('age_min') is not None and data.get('age_max') is not None:
             q &= Q(viewing__client__age_min__gte=data.get('age_min')) & Q(
