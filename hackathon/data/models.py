@@ -16,6 +16,7 @@ class Client(models.Model):
     age_min = models.IntegerField()
     age_max = models.IntegerField()
     address = models.ForeignKey(AddressModel, on_delete=models.CASCADE,null=True)
+    preferred_category = models.CharField(max_length=300, null=True, blank=True)
 
 
 class ChannelPackege(models.Model):
