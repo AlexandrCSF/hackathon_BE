@@ -29,7 +29,6 @@ ALLOWED_HOSTS = ['*']
 HOST = 'http://130.193.46.212'
 CSRF_TRUSTED_ORIGINS = [HOST]
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -100,7 +99,6 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -114,7 +112,6 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -134,7 +131,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -145,7 +141,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = False
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -160,19 +155,19 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.yandex.com'
+EMAIL_HOST = 'smtp.yandex.ru'
 EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = os.getenv('EMAIL')
 EMAIL_HOST_USER = os.getenv('EMAIL')
 EMAIL_HOST_PASSWORD = os.getenv('PASSWORD')
 EMAIL_USE_TLS = True
 
-CLIENTS_URL=os.getenv('CLIENTS_URL')
-ADDRESS_URL=os.getenv('ADDRESS_URL')
-PACKAGE_CHANNEL_URL=os.getenv('PACKAGE_CHANNEL_URL')
-ACTIVITIES_URL=os.getenv('ACTIVITIES_URL')
-DADATA_TOKEN=os.getenv('DADATA_TOKEN')
-DADATA_SECRET=os.getenv('DADATA_SECRET')
+CLIENTS_URL = os.getenv('CLIENTS_URL')
+ADDRESS_URL = os.getenv('ADDRESS_URL')
+PACKAGE_CHANNEL_URL = os.getenv('PACKAGE_CHANNEL_URL')
+ACTIVITIES_URL = os.getenv('ACTIVITIES_URL')
+DADATA_TOKEN = os.getenv('DADATA_TOKEN')
+DADATA_SECRET = os.getenv('DADATA_SECRET')
 # settings.py
 # SECURE_SSL_REDIRECT = True  # Enforces HTTPS
 SECURE_HSTS_SECONDS = 3600  # HTTP Strict Transport Security
