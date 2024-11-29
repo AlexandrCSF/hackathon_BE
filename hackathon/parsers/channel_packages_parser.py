@@ -34,3 +34,4 @@ class ChannelsPackagesParser:
         Channel.objects.bulk_create(channels, ignore_conflicts=True)
 
         ThroughModel.objects.bulk_create(throughs, ignore_conflicts=True)
+        print('parsed channels and packages')

@@ -1,4 +1,5 @@
 import pandas as pd
+from tqdm import tqdm
 from django.conf import settings
 
 from data.models import TVShow, Viewing, Category, Client
@@ -42,7 +43,7 @@ class BigFileParse:
         clients = {client.external_id: client.id for client in Client.objects.all()}
         i = 1
 
-        for index, row in df.iterrows():
+        for index, row in tqdm(df.iterrows()):
             client_external_id, device, time_channel, channel_id, TVshowname, TVshowtimestart, TVshowtimeend, TVshowwatchedduration, category, subcategory = row
 
             category_instance, created = Category.objects.get_or_create(name=category)

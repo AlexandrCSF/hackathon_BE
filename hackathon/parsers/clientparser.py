@@ -14,3 +14,4 @@ class ClientParser:
             data2 = row[0].split(';')
             clients.append(Client(external_id=data2[0],gender=False if data1[1]=='F' else True,age_min=data1[2].split('-')[0],age_max=data1[2].split('-')[1],address=addresses.get(data2[1] + data1[0],None)))
         Client.objects.bulk_create(clients)
+        print('parsed clients')
