@@ -50,3 +50,6 @@ class SimilarClient(models.Model):
     client = models.ForeignKey(Client, related_name="similar_clients", on_delete=models.CASCADE)
     similar_client = models.ForeignKey(Client, related_name="similar_to", on_delete=models.CASCADE)
     similarity_score = models.FloatField()
+
+    class Meta:
+        ordering = ['-similarity_score']
