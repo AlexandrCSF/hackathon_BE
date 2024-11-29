@@ -8,28 +8,25 @@ from data.models import Client, AddressModel, Viewing
 
 class ClientParser:
     def fill(self):
-        df = pd.read_csv(settings.FILES_DIR / 'client.csv')
+        df = pd.read_csv(settings.FILES_DIR / 'client.csv',delimiter=';')
         addresses = {address.address: address for address in AddressModel.objects.all()}
 
         clients_to_update = []
         clients_to_create = []
         existing_external_ids = set(Client.objects.values_list('external_id', flat=True))
-        unique_external_ids = Client.objects.values_list('external_id', flat=True).distinct()
 
         for row in tqdm(df.iterrows()):
-            data1 = row[1][0].split(';')
-            data2 = row[0].split(';')
-            external_id = data2[0]
+            data = row[1]
+            external_id = data[0]
 
-            gender = False if data1[1] == 'F' else True
-            age_min, age_max = data1[2].split('-')
-            address = addresses.get(data2[1] + data1[0], None)
+            gender = False if data[2] == 'F' else True
+            age_min, age_max = data[3].split('-')
+            address = addresses.get(str(data[1]), None)
 
             if external_id in existing_external_ids:
                 client = Client.objects.get(external_id=external_id)
-                if client.address != address:
-                    client.address = address
-                    clients_to_update.append(client)
+                client.address = address
+                clients_to_update.append(client)
             else:
                 clients_to_create.append(Client(
                     external_id=external_id,

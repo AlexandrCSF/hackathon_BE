@@ -1,9 +1,10 @@
 import os
 import pickle
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 from django.conf import settings
+from django.db.models import Q
 from tqdm import tqdm
 
 from data.models import TVShow, Viewing, Category, Client, Channel
@@ -34,9 +35,8 @@ class BigFileParse:
         max_tv_show_id = max_tv_show.id if max_tv_show else 0
         max_category = Category.objects.all().order_by('-id').first()
         max_category_id = max_category.id if max_category else 0
-
         for index, row in tqdm(df.iterrows()):
-            client_external_id, device, time_channel, channel_id, TVshowname, TVshowtimestart, TVshowtimeend, TVshowwatchedduration, category, subcategory = row
+            client_external_id, device, time_channel, channel_id, TVshowname, TVshowtimestart, TVshowtimeend, TVshow_watched_duration, category, subcategory = row
 
             category_instance = existing_categories.get(category)
             if not category_instance:
@@ -66,7 +66,7 @@ class BigFileParse:
                 new_channels.append(Channel(id=channel_id))
                 channels.add(channel_id)
 
-            view_key = (datetime.strptime(TVshowtimestart, '%Y-%m-%d %H:%M:%S'),
+            view_key = (datetime.strptime(time_channel, '%Y-%m-%d %H:%M:%S'),
                         datetime.strptime(TVshowtimeend, '%Y-%m-%d %H:%M:%S'),
                         device,
                         tv_show_instance.id,
@@ -74,8 +74,8 @@ class BigFileParse:
                         channel_id)
             if view_key not in existing_views:
                 viewing_instance = Viewing(
-                    start_time=TVshowtimestart,
-                    finish_time=TVshowtimeend,
+                    start_time=time_channel,
+                    finish_time=datetime.strptime(time_channel,'%Y-%m-%d %H:%M:%S') + timedelta(seconds=TVshow_watched_duration),
                     device=device,
                     tv_show_id=tv_show_instance.id,
                     client_id=clients[client_external_id],
