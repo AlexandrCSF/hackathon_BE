@@ -28,6 +28,7 @@ class MostViewedTWShowsView(APIView):
             q = q & Q(viewing__finish_time__lte=data.get('finish_time'))
 
         aggregate = tw_shows.annotate(view_count=Count('viewing', filter=q))
+        aggregate = aggregate.order_by('view_count')
 
         return Response(self.serializer_class({}).data, status=status.HTTP_200_OK)
 
@@ -47,5 +48,6 @@ class MostViewedChannelsView(APIView):
 
         channels = Channel.objects.all()
         aggregate = channels.annotate(view_count=Count('viewing', filter=q))
+        aggregate = aggregate.order_by('view_count')
 
         return Response(self.serializer_class({}).data, status=status.HTTP_200_OK)

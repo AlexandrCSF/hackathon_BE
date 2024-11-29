@@ -66,8 +66,7 @@ class UpdateAddressesView(APIView):
                         update_addresses.append(address_model)
                 else:
                     new_addresses.append(AddressModel(**{**self.get_geo_by_address(row['address']), **row}))
-                if index == 10:
-                    break
+
 
         AddressModel.objects.bulk_create(new_addresses, batch_size=10000)
         AddressModel.objects.bulk_update(update_addresses, batch_size=10000, fields=['flats', 'entrances', 'floors'])
