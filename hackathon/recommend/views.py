@@ -35,8 +35,8 @@ def recommend_channels_and_content(client_id):
 
     return {
         "channels": [channel.id for channel in recommended_channels],
-        "packages": [package.id for package in recommended_packages],
-        "tv_shows": [tv_show.id for tv_show in recommended_tv_shows],
+        "packages": [package.name for package in recommended_packages],
+        "tv_shows": [tv_show.name for tv_show in recommended_tv_shows],
     }
 
 class RecommendView(generics.GenericAPIView):
