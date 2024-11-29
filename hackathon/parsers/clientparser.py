@@ -16,14 +16,7 @@ class ClientParser:
         existing_external_ids = set(Client.objects.values_list('external_id', flat=True))
         unique_external_ids = Client.objects.values_list('external_id', flat=True).distinct()
 
-        for external_id in tqdm(unique_external_ids):
-            clients = Client.objects.filter(external_id=external_id)
-
-            if clients.count() > 1:
-                min_id_client = clients.aggregate(Min('id'))['id__min']
-                clients.exclude(id=min_id_client).delete()
-
-        for row in df.iterrows():
+        for row in tqdm(df.iterrows()):
             data1 = row[1][0].split(';')
             data2 = row[0].split(';')
             external_id = data2[0]
