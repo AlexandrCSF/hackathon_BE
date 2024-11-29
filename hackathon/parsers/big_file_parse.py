@@ -41,26 +41,34 @@ class BigFileParse:
         Viewing.objects.all().delete()
         ThroughModel.objects.all().delete()
         clients = {client.external_id: client.id for client in Client.objects.all()}
+        existing_categories = {category.name: category for category in Category.objects.all()}
+        existing_tv_shows = {(tv_show.name, tv_show.start_time, tv_show.finish_time, tv_show.main_category): tv_show for tv_show in TVShow.objects.all()}
+
         i = 1
 
         for index, row in tqdm(df.iterrows()):
             client_external_id, device, time_channel, channel_id, TVshowname, TVshowtimestart, TVshowtimeend, TVshowwatchedduration, category, subcategory = row
 
-            category_instance, created = Category.objects.get_or_create(name=category)
-            if created:
+            category_instance = existing_categories.get(category)
+            if not category_instance:
+                category_instance = Category(name=category)
                 categories.append(category_instance)
+                existing_categories[category] = category_instance
 
-            tv_show_instance, created = TVShow.objects.get_or_create(
-                name=TVshowname,
-                start_time=TVshowtimestart,
-                finish_time=TVshowtimeend,
-                main_category=category
-            )
-            if created:
+            tv_show_key = (TVshowname, TVshowtimestart, TVshowtimeend, category)
+            tv_show_instance = existing_tv_shows.get(tv_show_key)
+            if not tv_show_instance:
+                tv_show_instance = TVShow(
+                    name=TVshowname,
+                    start_time=TVshowtimestart,
+                    finish_time=TVshowtimeend,
+                    main_category=category
+                )
                 tv_shows.append(tv_show_instance)
+                existing_tv_shows[tv_show_key] = tv_show_instance
 
             viewing_instance = Viewing(
-                id = i,
+                id=i,
                 start_time=TVshowtimestart,
                 finish_time=TVshowtimeend,
                 device=device,
@@ -72,8 +80,9 @@ class BigFileParse:
 
             tv_show_categories.append(ThroughModel(tvshow_id=tv_show_instance.id, category_id=category_instance.id))
             i += 1
+
         Category.objects.bulk_create(categories, ignore_conflicts=True)
-        TVShow.objects.bulk_create(tv_shows, ignore_conflicts=True)
-        Viewing.objects.bulk_create(viewings, ignore_conflicts=True)
+        TVShow.objects.bulk_create(tv_shows, ignore_conflicts=True,batch_size=2000)
+        Viewing.objects.bulk_create(viewings, ignore_conflicts=True,batch_size=2000)
 
         ThroughModel.objects.bulk_create(tv_show_categories, ignore_conflicts=True)
