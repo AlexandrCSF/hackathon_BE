@@ -8,6 +8,7 @@ class ClientParser:
     def fill(self):
         df = pd.read_csv(settings.FILES_DIR / 'client.csv')
         addresses = {address.address: address for address in AddressModel.objects.all()}
+        Client.objects.all().delete()
         clients = []
         for row in df.iterrows():
             data1 = row[1][0].split(';')
