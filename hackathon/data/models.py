@@ -27,14 +27,14 @@ class Channel(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=300)
 
 
 class TVShow(models.Model):
     start_time = models.DateTimeField()
     finish_time = models.DateTimeField()
-    name = models.CharField(max_length=64)
-    main_category = models.CharField(max_length=64)
+    name = models.CharField(max_length=300)
+    main_category = models.CharField(max_length=300)
     categories = models.ManyToManyField(Category, related_name='tv_shows')
 
 
