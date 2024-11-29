@@ -2,12 +2,14 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db.models import Q, Count, F
+from django.db.models import Sum
+from rest_framework import generics
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from data.models import TVShow
+from data.models import TVShow, Client, Channel, Viewing
 
 
 class RequestSerializer(serializers.Serializer):
@@ -97,3 +99,31 @@ class MostViewedTVShowsFileView(BaseMostViewedTVShowsView):
             file.write(content)
         # return FileResponse(open('123.csv', 'rb'), as_attachment=True)
         return Response({'link': "https://freedom-lens.ru/static/123.csv"}, status=status.HTTP_200_OK)
+
+
+class UserWatchedChannelView(generics.GenericAPIView):
+    def post(self, request):
+        client_id = request.GET["client_id"]
+        channel_id = request.GET["channel_id"]
+
+        client = Client.objects.filter(id=client_id).first()
+        channel = Channel.objects.filter(id=channel_id).first()
+
+        if not client or not channel:
+            return Response(data={"error": "Invalid id"}, status=404)
+
+        total_viewing_time = Viewing.objects.filter(client=client, channel=channel).aggregate(
+            total_time=Sum(F('finish_time') - F('start_time'))
+        )['total_time']
+
+        if not total_viewing_time:
+            total_viewing_time = 0
+
+        return Response(
+            data={
+                "client_id": client_id,
+                "channel_id": channel_id,
+                "total_viewing_time": str(total_viewing_time)
+            },
+            status=200
+        )
