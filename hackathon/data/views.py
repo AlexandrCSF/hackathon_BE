@@ -19,6 +19,7 @@ class ClientsView(APIView):
     serializer_class = AllClientsSerializer
 
     def get(self, request, *args, **kwargs):
+        clients = Client.objects.filter(address__isnull=False)[:50]
         return Response(self.serializer_class({'clients': Client.objects.filter(address__isnull=False)[:50]}).data, status=status.HTTP_200_OK)
 
 
@@ -36,11 +37,9 @@ class UpdateAddressesView(APIView):
     def post(self, request, *args, **kwargs):
         file_name = 'address.csv'
         content = request.stream.body.decode()
-        # Замена найденных строк на пустую строку
         modified_content = re.sub(r'".*"', '', content)
         modified_content = modified_content.replace('\r\n', '\n')
 
-        # Записываем измененное содержимое обратно в файл
         with open(file_name, 'w', encoding='utf-8') as file:
             file.write(modified_content)
         data = pd.read_csv(file_name, delimiter=';')

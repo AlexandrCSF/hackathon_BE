@@ -11,6 +11,11 @@ from data.models import TVShow
 class RequestSerializer(serializers.Serializer):
     start_time = serializers.DateField(required=False)
     finish_time = serializers.DateField(required=False)
+    age_max = serializers.IntegerField(required=False)
+    age_min = serializers.IntegerField(required=False)
+    categories = serializers.ListSerializer(child=serializers.CharField(), required=False)
+    sort_by_choices = ['most_watched, watch_time', 'start_time']
+    sort_by = serializers.ChoiceField(choices=sort_by_choices)
 
 
 class TVShowSerializer(serializers.ModelSerializer):
@@ -31,15 +36,36 @@ class BaseMostViewedTVShowsView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.data
         tv_shows = TVShow.objects.all()
+
         q = Q()
+
         if data.get('start_time'):
-            q = q & Q(viewing__start_time__gte=data.get('start_time'))
+            q &= Q(viewing__start_time__gte=data.get('start_time'))
         if data.get('finish_time'):
-            q = q & Q(viewing__finish_time__lte=data.get('finish_time'))
+            q &= Q(viewing__finish_time__lte=data.get('finish_time'))
+
+        if data.get('age_min') is not None and data.get('age_max') is not None:
+            q &= Q(viewing__client__age_min__gte=data.get('age_min')) & Q(
+                viewing__client__age_max__lte=data.get('age_max'))
+
+        if data.get('categories'):
+            category_names = data.get('categories')
+            q &= Q(categories__name__in=category_names)
 
         tv_shows = tv_shows.annotate(view_count=Count('viewing', filter=q))
-        tv_shows = tv_shows.order_by('-view_count')
-        return ResponseSerializer({'tv_shows': tv_shows[:50]}).data
+
+        if data.get('sort_by') == 'name':
+            tv_shows = tv_shows.order_by('name')
+        elif data.get('sort_by') == 'view_count':
+            tv_shows = tv_shows.order_by('-view_count')
+        elif data.get('sort_by') == 'start_time':
+            tv_shows = tv_shows.order_by('viewing__start_time')
+        else:
+            tv_shows = tv_shows.order_by('-view_count')
+
+        tv_shows = tv_shows[:50]
+
+        return ResponseSerializer({'tv_shows': tv_shows}).data
 
 
 class MostViewedTVShowsView(BaseMostViewedTVShowsView):
