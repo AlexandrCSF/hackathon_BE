@@ -1,8 +1,9 @@
-# Create your views here.
+import os
+import zipfile
 from collections import Counter
 
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, serializers
+from django.conf import settings
+from rest_framework import generics, serializers, status
 from rest_framework.response import Response
 from tqdm import tqdm
 
@@ -39,11 +40,11 @@ def recommend_channels_and_content(client_id):
         "tv_shows": [tv_show.name for tv_show in recommended_tv_shows],
     }
 
+
 class RecommendView(generics.GenericAPIView):
     class ClientRequestSerializer(serializers.Serializer):
         client_id = serializers.IntegerField()
 
-    @swagger_auto_schema(query_serializer=ClientRequestSerializer())
     def post(self, request):
         recommendations = recommend_channels_and_content(request.GET['client_id'])
 
@@ -53,3 +54,33 @@ class RecommendView(generics.GenericAPIView):
             'recommended_packages': recommendations['packages'],
             'recommended_tv_shows': recommendations['tv_shows'],
         }, status=200)
+
+
+class RecommendFileView(generics.GenericAPIView):
+    class ClientRequestSerializer(serializers.Serializer):
+        client_id = serializers.IntegerField()
+
+    def create_csv(self, data, content_name, folder):
+        content = content_name
+        for item in data:
+            content += '\n'
+            content += str(item)
+        with open(folder, 'w') as file:
+            file.write(content)
+
+    def post(self, request):
+        folder_path = settings.STATICFILES_DIRS[0] / 'report'
+        os.makedirs(folder_path, exist_ok=True)
+
+        recommendations = recommend_channels_and_content(request.GET['client_id'])
+
+        self.create_csv(recommendations['channels'], 'channels', folder_path / 'channels.csv')
+        self.create_csv(recommendations['packages'], 'packages', folder_path / 'packages.csv')
+        self.create_csv(recommendations['tv_shows'], 'tv_shows', folder_path / 'tv_shows.csv')
+
+        with zipfile.ZipFile(settings.STATICFILES_DIRS[0] / 'report.zip', 'w') as zip_file:
+            zip_file.write(folder_path / 'channels.csv', 'channels.csv')
+            zip_file.write(folder_path / 'packages.csv', 'packages.csv')
+            zip_file.write(folder_path / 'tv_shows.csv', 'tv_shows.csv')
+
+        return Response({'link': "https://freedom-lens.ru/static/report.zip"}, status=status.HTTP_200_OK)
