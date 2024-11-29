@@ -45,3 +45,8 @@ class Viewing(models.Model):
     tv_show = models.ForeignKey(TVShow, on_delete=models.CASCADE)
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
+
+class SimilarClient(models.Model):
+    client = models.ForeignKey(Client, related_name="similar_clients", on_delete=models.CASCADE)
+    similar_client = models.ForeignKey(Client, related_name="similar_to", on_delete=models.CASCADE)
+    similarity_score = models.FloatField()

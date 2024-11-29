@@ -20,4 +20,5 @@ urlpatterns = [
     path('auth/', include('authorization.urls')),
     path('data/', include('data.urls')),
     path('analytics/', include('analytics.urls')),
+    path('recommend/', include('recommend.urls')),
 ]
