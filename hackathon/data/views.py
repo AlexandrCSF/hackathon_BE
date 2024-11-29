@@ -50,7 +50,7 @@ class UpdateAddressesView(APIView):
         new_addresses = []
         update_addresses = []
         existing_addresses = {a.address: a for a in AddressModel.objects.all()}
-        with contextlib.suppress(HTTPStatusError):
+        with contextlib.suppress(Exception):
             for index, row in data.iterrows():
                 try:
                     row['floors'] = int(row['floors'])
