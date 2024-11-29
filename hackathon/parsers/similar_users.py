@@ -12,7 +12,6 @@ class SimilarClientParse:
         categories = list(Category.objects.all())
 
         category_to_index = {category.name: idx for idx, category in enumerate(categories)}
-        client_index_mapping = {client.id: idx for idx, client in enumerate(clients)}
 
         client_features = []
 
@@ -29,36 +28,24 @@ class SimilarClientParse:
 
         client_features = np.array(client_features, dtype=np.float32)
 
-        kmeans = KMeans(n_clusters=5, random_state=0)
+        kmeans = KMeans(n_clusters=len(categories), random_state=0)
         kmeans.fit(client_features)
 
         cluster_labels = kmeans.labels_
 
-        cluster_to_clients = defaultdict(list)
         for client, cluster_label in zip(clients, cluster_labels):
-            cluster_to_clients[cluster_label].append(client)
+            client.kmeans_label = cluster_label
+            client.save()
 
-        SimilarClient.objects.all().delete()
+        client_to_cluster = {client.id: cluster_label for client, cluster_label in zip(clients, cluster_labels)}
 
-        with transaction.atomic():
-            for cluster_clients in tqdm(cluster_to_clients.values(), desc="Processing clusters"):
-                cluster_indices = [client_index_mapping[client.id] for client in cluster_clients]
+        cluster_centroids = kmeans.cluster_centers_
 
-                cluster_feature_vectors = client_features[cluster_indices]
+        for client in clients:
+            cluster_label = client_to_cluster[client.id]
+            centroid = cluster_centroids[cluster_label]
 
-                norms = np.linalg.norm(cluster_feature_vectors, axis=1, keepdims=True)
-                cluster_feature_vectors = cluster_feature_vectors / (norms + 1e-10)
-
-                similarity_matrix = np.dot(cluster_feature_vectors, cluster_feature_vectors.T)
-
-                similar_objects = []
-                for i, client in enumerate(cluster_clients):
-                    for j, similar_client in enumerate(cluster_clients):
-                        if i != j:
-                            similarity_score = similarity_matrix[i, j]
-                            similar_objects.append(SimilarClient(
-                                client=client,
-                                similar_client=similar_client,
-                                similarity_score=similarity_score,
-                            ))
-                SimilarClient.objects.bulk_create(similar_objects, batch_size=1000)
+            best_categories = np.argsort(centroid)[::-1][:3]
+            client.preferred_category = categories[best_categories[0]].name
+            client.save()
+            print(f"Client {client.id} is most interested in categories: {', '.join([categories[i].name for i in best_categories])}")
