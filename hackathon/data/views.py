@@ -15,10 +15,14 @@ from data.models import AddressModel
 from data.models import Client
 from data.serializer import ClientSerializer
 
+from data.serializer import TestSerializer
 
-class TestView(generics.ListAPIView):
-    serializer_class = ClientSerializer
-    queryset = Client.objects.all()[:50]
+
+class TestView(APIView):
+    serializer_class = TestSerializer
+
+    def get(self, request, *args, **kwargs):
+        return Response(self.serializer_class({'clients': Client.objects.all()[:50]}).data, status=status.HTTP_200_OK)
 
 
 class UpdateAddressesView(APIView):
