@@ -1,13 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.db.models import Q, Count
-from rest_framework import serializers
+from django.db.models import Q, Count, Sum, ExpressionWrapper, F, IntegerField
+from django.forms import DurationField
+from rest_framework import serializers, generics
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from data.models import TVShow
+from data.models import TVShow, Client, Channel, Viewing
 
 
 class RequestSerializer(serializers.Serializer):
@@ -17,7 +18,7 @@ class RequestSerializer(serializers.Serializer):
     age_min = serializers.IntegerField(required=False)
     categories = serializers.ListSerializer(child=serializers.CharField(), required=False)
     sort_by_choices = ['most_watched, watch_time', 'start_time']
-    sort_by = serializers.ChoiceField(choices=sort_by_choices,required=False)
+    sort_by = serializers.ChoiceField(choices=sort_by_choices, required=False)
 
 
 class TVShowSerializer(serializers.ModelSerializer):
@@ -51,7 +52,6 @@ class BaseMostViewedTVShowsView(APIView):
             finish_time = datetime.strptime(finish_time_str, '%H:%M:%S').time()
             q &= Q(viewing__finish_time__hour__lte=finish_time.hour,
                    viewing__finish_time__minute__lte=finish_time.minute)
-
 
         if data.get('age_min') is not None and data.get('age_max') is not None:
             q &= Q(viewing__client__age_min__gte=data.get('age_min')) & Q(
@@ -95,3 +95,31 @@ class MostViewedTVShowsFileView(BaseMostViewedTVShowsView):
             file.write(content)
         # return FileResponse(open('123.csv', 'rb'), as_attachment=True)
         return Response({'link': "https://freedom-lens.ru/static/123.csv"}, status=status.HTTP_200_OK)
+
+
+class UserWatchedChannelView(generics.GenericAPIView):
+    def post(self, request):
+        client_id = request.GET["client_id"]
+        channel_id = request.GET["channel_id"]
+
+        client = Client.objects.filter(id=client_id).first()
+        channel = Channel.objects.filter(id=channel_id).first()
+
+        if not client or not channel:
+            return Response(data={"error": "Invalid id"}, status=404)
+
+        total_viewing_time = Viewing.objects.filter(client=client, channel=channel).aggregate(
+            total_time=Sum(F('finish_time') - F('start_time'))
+        )['total_time']
+
+        if not total_viewing_time:
+            total_viewing_time = 0
+
+        return Response(
+            data={
+                "client_id": client_id,
+                "channel_id": channel_id,
+                "total_viewing_time": str(total_viewing_time)
+            },
+            status=200
+        )
