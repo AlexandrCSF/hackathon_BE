@@ -38,6 +38,10 @@ class BigFileParse:
         for index, row in tqdm(df.iterrows()):
             client_external_id, device, time_channel, channel_id, TVshowname, TVshowtimestart, TVshowtimeend, TVshow_watched_duration, category, subcategory = row
 
+            time_channel = datetime.strptime(time_channel, '%Y-%m-%d %H:%M:%S')
+            if time_channel < datetime.strptime(TVshowtimestart, '%Y-%m-%d %H:%M:%S'):
+                time_channel = datetime.strptime(TVshowtimestart, '%Y-%m-%d %H:%M:%S')
+
             category_instance = existing_categories.get(category)
             if not category_instance:
                 max_category_id += 1
@@ -66,8 +70,8 @@ class BigFileParse:
                 new_channels.append(Channel(id=channel_id))
                 channels.add(channel_id)
 
-            view_key = (datetime.strptime(time_channel, '%Y-%m-%d %H:%M:%S'),
-                        datetime.strptime(TVshowtimeend, '%Y-%m-%d %H:%M:%S'),
+            view_key = (time_channel,
+                        time_channel + timedelta(seconds=TVshow_watched_duration),
                         device,
                         tv_show_instance.id,
                         clients[client_external_id],
@@ -75,7 +79,7 @@ class BigFileParse:
             if view_key not in existing_views:
                 viewing_instance = Viewing(
                     start_time=time_channel,
-                    finish_time=datetime.strptime(time_channel,'%Y-%m-%d %H:%M:%S') + timedelta(seconds=TVshow_watched_duration),
+                    finish_time=time_channel + timedelta(seconds=TVshow_watched_duration),
                     device=device,
                     tv_show_id=tv_show_instance.id,
                     client_id=clients[client_external_id],

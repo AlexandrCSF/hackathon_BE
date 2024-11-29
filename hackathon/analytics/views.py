@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.conf import settings
-from django.db.models import Q, Count
+from django.db.models import Q, Count, F
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework.response import Response
@@ -17,7 +17,7 @@ class RequestSerializer(serializers.Serializer):
     age_min = serializers.IntegerField(required=False)
     categories = serializers.ListSerializer(child=serializers.CharField(), required=False)
     sort_by_choices = ['most_watched, watch_time', 'start_time']
-    sort_by = serializers.ChoiceField(choices=sort_by_choices,required=False)
+    sort_by = serializers.ChoiceField(choices=sort_by_choices, required=False)
 
 
 class TVShowSerializer(serializers.ModelSerializer):
@@ -40,18 +40,20 @@ class BaseMostViewedTVShowsView(APIView):
         tv_shows = TVShow.objects.all()
 
         q = Q()
+        if data.get('start_time') or data.get('finish_time'):
+            q &= Q(viewing__start_time__day=F('viewing__finish_time__day'))
 
         if data.get('start_time'):
             start_time_str = data.get('start_time')
             start_time = datetime.strptime(start_time_str, '%H:%M:%S').time()
-            q &= Q(viewing__start_time__hour__gte=start_time.hour, viewing__start_time__minute__gte=start_time.minute)
+            q &= Q(viewing__start_time__hour__gt=start_time.hour) | Q(viewing__start_time__hour=start_time.hour,
+                                                                      viewing__start_time__minute__gte=start_time.minute)
 
         if data.get('finish_time'):
             finish_time_str = data.get('finish_time')
             finish_time = datetime.strptime(finish_time_str, '%H:%M:%S').time()
-            q &= Q(viewing__finish_time__hour__lte=finish_time.hour,
-                   viewing__finish_time__minute__lte=finish_time.minute)
-
+            q &= Q(viewing__finish_time__hour__lt=finish_time.hour) | Q(viewing__finish_time__hour=finish_time.hour,
+                                                                        viewing__finish_time__minute__lte=finish_time.minute)
 
         if data.get('age_min') is not None and data.get('age_max') is not None:
             q &= Q(viewing__client__age_min__gte=data.get('age_min')) & Q(
