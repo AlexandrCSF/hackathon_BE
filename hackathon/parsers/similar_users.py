@@ -1,46 +1,55 @@
 from collections import Counter
 import numpy as np
+from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestNeighbors
 
 from data.models import Client, Category, SimilarClient
 from tqdm import tqdm
 
-def save_similar_clients():
-    clients = Client.objects.prefetch_related('viewing_set__tv_show__categories')
 
-    categories = Category.objects.all()
-    category_to_index = {category.name: idx for idx, category in enumerate(categories)}
+class SimilarClientParse:
+    def fill(self):
+        clients = Client.objects.prefetch_related('viewing_set__tv_show__categories')[:6000]
 
-    client_features = []
+        categories = Category.objects.all()
 
-    for client in tqdm(clients):
-        feature_vector = np.zeros(len(categories))
+        category_to_index = {category.name: idx for idx, category in enumerate(categories)}
 
-        for viewing in client.viewing_set.all():
-            for category in viewing.tv_show.categories.all():
-                category_idx = category_to_index.get(category.name)
-                if category_idx is not None:
-                    feature_vector[category_idx] = 1
+        client_features = []
 
-        client_features.append(feature_vector)
+        for client in tqdm(clients.iterator(chunk_size=200)):
+            feature_vector = np.zeros(len(categories))
 
-    client_features = np.array(client_features)
+            for viewing in client.viewing_set.all():
+                for category in viewing.tv_show.categories.all():
+                    category_idx = category_to_index.get(category.name)
+                    if category_idx is not None:
+                        feature_vector[category_idx] = 1
 
-    knn = NearestNeighbors(n_neighbors=5, metric='cosine')
-    knn.fit(client_features)
+            client_features.append(feature_vector)
 
-    for client_idx, client in tqdm(enumerate(clients)):
-        target_client_vector = client_features[client_idx]
+        client_features = np.array(client_features)
 
-        distances, indices = knn.kneighbors([target_client_vector])
+        kmeans = KMeans(n_clusters=5, random_state=0)
+        kmeans.fit(client_features)
 
-        for idx in indices[0]:
-            if idx != client_idx:
-                similar_client = clients[idx]
-                similarity_score = 1 - distances[0][np.where(indices[0] == idx)[0][0]]
+        cluster_labels = kmeans.labels_
 
-                SimilarClient.objects.update_or_create(
-                    client=client,
-                    similar_client=similar_client,
-                    defaults={'similarity_score': similarity_score},
-                )
+        cluster_to_clients = {i: [] for i in range(kmeans.n_clusters)}
+        for client_idx, cluster_label in enumerate(cluster_labels):
+            cluster_to_clients[cluster_label].append(clients[client_idx])
+
+        for cluster_label, cluster_clients in cluster_to_clients.items():
+            for client in cluster_clients:
+                for similar_client in cluster_clients:
+                    if client != similar_client:
+                        similarity_score = np.dot(client_features[clients.index(client)],
+                                                  client_features[clients.index(similar_client)]) / (np.linalg.norm(
+                            client_features[clients.index(client)]) * np.linalg.norm(
+                            client_features[clients.index(similar_client)]))
+
+                        SimilarClient.objects.update_or_create(
+                            client=client,
+                            similar_client=similar_client,
+                            defaults={'similarity_score': similarity_score},
+                        )

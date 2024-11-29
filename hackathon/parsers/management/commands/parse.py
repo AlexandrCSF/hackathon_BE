@@ -4,7 +4,7 @@ from parsers.address_parser import AddressParser
 from parsers.big_file_parse import BigFileParse
 from parsers.channel_packages_parser import ChannelsPackagesParser
 from parsers.clientparser import ClientParser
-from parsers.similar_users import save_similar_clients
+from parsers.similar_users import SimilarClientParse
 
 
 class Command(BaseCommand):
@@ -15,4 +15,4 @@ class Command(BaseCommand):
         ClientParser().fill()
         ChannelsPackagesParser().fill()
         BigFileParse().fill()
-        save_similar_clients()
+        SimilarClientParse().fill()

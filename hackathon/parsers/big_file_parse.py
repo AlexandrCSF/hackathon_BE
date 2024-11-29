@@ -1,3 +1,5 @@
+import os
+import pickle
 from datetime import datetime
 
 import pandas as pd
@@ -15,7 +17,10 @@ class BigFileParse:
         tv_shows = []
         viewings = []
         tv_show_categories = []
-
+        viewings_file = settings.FILES_DIR / 'viewings.pkl'
+        if os.path.exists(viewings_file):
+            with open(viewings_file, 'rb') as f:
+                viewings = pickle.load(f)
         clients = {client.external_id: client.id for client in Client.objects.all()}
         existing_categories = {category.name: category for category in Category.objects.all()}
         existing_tv_shows = {(tv_show.name, tv_show.start_time, tv_show.finish_time, tv_show.main_category): tv_show for
@@ -29,8 +34,10 @@ class BigFileParse:
                           v in Viewing.objects.all()}
         channels = set(Channel.objects.values_list('id', flat=True))
         new_channels = []
-        max_tv_show_id = TVShow.objects.all().order_by('-id').first().id
-        max_category_id = Category.objects.all().order_by('-id').first().id
+        max_tv_show = TVShow.objects.all().order_by('-id').first()
+        max_tv_show_id = max_tv_show.id if max_tv_show else 0
+        max_category = Category.objects.all().order_by('-id').first()
+        max_category_id = max_category.id if max_category else 0
 
         for index, row in tqdm(df.iterrows()):
             client_external_id, device, time_channel, channel_id, TVshowname, TVshowtimestart, TVshowtimeend, TVshowwatchedduration, category, subcategory = row
@@ -81,10 +88,15 @@ class BigFileParse:
                 viewings.append(viewing_instance)
 
                 tv_show_categories.append(ThroughModel(tvshow_id=tv_show_instance.id, category_id=category_instance.id))
+        with open(viewings_file, 'wb') as f:
+            pickle.dump(viewings, f)
 
         Category.objects.bulk_create(categories, batch_size=2000)
+        print('categories')
         TVShow.objects.bulk_create(tv_shows, batch_size=2000)
+        print('tv')
         Channel.objects.bulk_create(new_channels, batch_size=2000)
+        print('channel')
         Viewing.objects.bulk_create(viewings, batch_size=20000)
-
+        print('viewing')
         ThroughModel.objects.bulk_create(tv_show_categories, ignore_conflicts=True)

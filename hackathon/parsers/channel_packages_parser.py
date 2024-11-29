@@ -18,8 +18,6 @@ class ChannelsPackagesParser:
             package_name, channel_id = row[0].split(';')
             channel_id = int(channel_id)
 
-            channel, created = Channel.objects.get_or_create(id=channel_id)
-
             package, created = ChannelPackege.objects.get_or_create(name=package_name)
             if created:
                 package_channels.append(package)
