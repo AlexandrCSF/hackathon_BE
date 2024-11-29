@@ -59,4 +59,4 @@ class MostViewedTVShowsFileView(BaseMostViewedTVShowsView):
         with open(settings.STATICFILES_DIRS[0] / '123.csv', 'w') as file:
             file.write(content)
         # return FileResponse(open('123.csv', 'rb'), as_attachment=True)
-        return Response({'link': f"{settings.HOST}:8000/static/{'123.csv'}"}, status=status.HTTP_200_OK)
+        return Response({'link': "https://freedom-lens.ru/static/123.csv"}, status=status.HTTP_200_OK)
