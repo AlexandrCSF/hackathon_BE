@@ -31,16 +31,16 @@ class Category(models.Model):
 
 
 class TVShow(models.Model):
-    start_time = models.DateField()
-    finish_time = models.DateField()
+    start_time = models.DateTimeField()
+    finish_time = models.DateTimeField()
     name = models.CharField(max_length=64)
     main_category = models.CharField(max_length=64)
     categories = models.ManyToManyField(Category, related_name='tv_shows')
 
 
 class Viewing(models.Model):
-    start_time = models.DateField()
-    finish_time = models.DateField()
+    start_time = models.DateTimeField()
+    finish_time = models.DateTimeField()
     device = models.CharField(max_length=16)
     tv_show = models.ForeignKey(TVShow, on_delete=models.CASCADE)
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
