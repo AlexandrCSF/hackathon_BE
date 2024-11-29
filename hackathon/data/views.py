@@ -5,6 +5,7 @@ import pandas as pd
 from dadata import Dadata
 from django.conf import settings
 from rest_framework import status
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,7 +13,7 @@ from rest_framework.views import APIView
 from data.models import AddressModel
 from data.models import Client
 
-from data.serializer import AllClientsSerializer
+from data.serializer import AllClientsSerializer, ClientSerializer
 
 
 class ClientsView(APIView):
@@ -21,6 +22,24 @@ class ClientsView(APIView):
     def get(self, request, *args, **kwargs):
         clients = Client.objects.filter(address__isnull=False)[:50]
         return Response(self.serializer_class({'clients': Client.objects.filter(address__isnull=False)[:50]}).data, status=status.HTTP_200_OK)
+
+
+class ClientView(RetrieveAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+
+    def get_object(self):
+        client_id = self.request.GET['client_id']
+        try:
+            client = Client.objects.get(id=client_id)
+        except Client.DoesNotExist:
+            return Response({'detail': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+        return client
+
+    def get(self, request, *args, **kwargs):
+        client = self.get_object()
+        serializer = self.get_serializer(client)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UpdateAddressesView(APIView):
