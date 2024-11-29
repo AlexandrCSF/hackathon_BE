@@ -4,8 +4,6 @@ import re
 import pandas as pd
 from dadata import Dadata
 from django.conf import settings
-from httpx import HTTPStatusError
-from rest_framework import generics
 from rest_framework import status
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
@@ -13,16 +11,15 @@ from rest_framework.views import APIView
 
 from data.models import AddressModel
 from data.models import Client
-from data.serializer import ClientSerializer
 
-from data.serializer import TestSerializer
+from data.serializer import AllClientsSerializer
 
 
-class TestView(APIView):
-    serializer_class = TestSerializer
+class ClientsView(APIView):
+    serializer_class = AllClientsSerializer
 
     def get(self, request, *args, **kwargs):
-        return Response(self.serializer_class({'clients': Client.objects.all()[:50]}).data, status=status.HTTP_200_OK)
+        return Response(self.serializer_class({'clients': Client.objects.filter(address__isnull=False)[:50]}).data, status=status.HTTP_200_OK)
 
 
 class UpdateAddressesView(APIView):
