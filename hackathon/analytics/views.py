@@ -109,7 +109,7 @@ class MostViewedTVShowsFileView(BaseMostViewedTVShowsView):
         # return FileResponse(open('123.csv', 'rb'), as_attachment=True)
         return Response({'link': "https://freedom-lens.ru/static/123.csv"}, status=status.HTTP_200_OK)
 
-class RequestEmailSerializer(serializers.Serializer):
+class RequestEmailSerializer(RequestSerializer):
     email = serializers.CharField()
 
 
@@ -123,8 +123,6 @@ class MostViewedTVShowsEmailView(BaseMostViewedTVShowsView):
         for tv_show in data['tv_shows']:
             content += '\n'
             content += ';'.join([str(v) for v in tv_show.values()])  # формат даты не как в исходных csv
-        # with open(settings.STATICFILES_DIRS[0] / '123.csv', 'w') as file:
-        #     file.write(content)
 
         email_message = EmailMultiAlternatives(
             'Your most viewed TV shows report',
@@ -132,8 +130,6 @@ class MostViewedTVShowsEmailView(BaseMostViewedTVShowsView):
             settings.DEFAULT_FROM_EMAIL,
             [request.data['email']]
         )
-        # with open(file_path, 'rb') as f:
-        #     email.attach(file_path.split('/')[-1], f.read(), 'application/octet-stream')
         email_message.attach('report.csv', content, 'text/csv')
         email_message.send()
 

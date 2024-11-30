@@ -3,6 +3,7 @@ import zipfile
 from collections import Counter
 
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from rest_framework import generics, serializers, status
 from rest_framework.response import Response
 from tqdm import tqdm
@@ -68,7 +69,7 @@ class RecommendFileView(generics.GenericAPIView):
         with open(folder, 'w') as file:
             file.write(content)
 
-    def post(self, request):
+    def create_csvs(self, request):
         folder_path = settings.STATICFILES_DIRS[0] / 'report'
         os.makedirs(folder_path, exist_ok=True)
 
@@ -78,9 +79,40 @@ class RecommendFileView(generics.GenericAPIView):
         self.create_csv(recommendations['packages'], 'packages', folder_path / 'packages.csv')
         self.create_csv(recommendations['tv_shows'], 'tv_shows', folder_path / 'tv_shows.csv')
 
+    def create_zip(self, request):
+        self.create_csvs(request)
+        folder_path = settings.STATICFILES_DIRS[0] / 'report'
+
         with zipfile.ZipFile(settings.STATICFILES_DIRS[0] / 'report.zip', 'w') as zip_file:
             zip_file.write(folder_path / 'channels.csv', 'channels.csv')
             zip_file.write(folder_path / 'packages.csv', 'packages.csv')
             zip_file.write(folder_path / 'tv_shows.csv', 'tv_shows.csv')
 
+    def post(self, request):
+        self.create_zip(request)
+
         return Response({'link': "https://freedom-lens.ru/static/report.zip"}, status=status.HTTP_200_OK)
+
+
+class RecommendEmailView(RecommendFileView):
+    def get_content(self, data, content_name):
+        content = content_name
+        for item in data:
+            content += '\n'
+            content += str(item)
+        return content
+
+    def post(self, request):
+        recommendations = recommend_channels_and_content(request.GET['client_id'])
+        email_message = EmailMultiAlternatives(
+            f'Recommendations by client with id = {request.GET["client_id"]}',
+            f'',
+            settings.DEFAULT_FROM_EMAIL,
+            [request.data['email']]
+        )
+
+        email_message.attach('channels.csv', self.get_content(recommendations['channels'], 'channels', ), 'text/csv')
+        email_message.attach('packages.csv', self.get_content(recommendations['packages'], 'packages', ), 'text/csv')
+        email_message.attach('tv_shows.csv', self.get_content(recommendations['tv_shows'], 'tv_shows', ), 'text/csv')
+        email_message.send()
+        return Response({}, status=status.HTTP_200_OK)
