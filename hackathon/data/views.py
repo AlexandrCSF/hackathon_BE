@@ -20,8 +20,7 @@ class ClientsView(APIView):
     serializer_class = AllClientsSerializer
 
     def get(self, request, *args, **kwargs):
-        clients = Client.objects.filter(address__isnull=False)[:50]
-        return Response(self.serializer_class({'clients': Client.objects.filter(address__isnull=False)[:50]}).data, status=status.HTTP_200_OK)
+        return Response(self.serializer_class({'clients': Client.objects.filter(address__isnull=False)[:100]}).data, status=status.HTTP_200_OK)
 
 
 class ClientView(RetrieveAPIView):

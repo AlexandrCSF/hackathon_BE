@@ -19,13 +19,14 @@ class ClientParser:
             data = row[1]
             external_id = data[0]
 
-            gender = False if data[2] == 'F' else True
+            gender = False if data[2] == 'Ж' else True
             age_min, age_max = data[3].split('-')
             address = addresses.get(str(data[1]), None)
 
             if external_id in existing_external_ids:
                 client = Client.objects.get(external_id=external_id)
                 client.address = address
+                client.gender = gender
                 clients_to_update.append(client)
             else:
                 clients_to_create.append(Client(
@@ -36,7 +37,7 @@ class ClientParser:
                     address=address
                 ))
 
-        Client.objects.bulk_update(clients_to_update, ['address'])
+        Client.objects.bulk_update(clients_to_update, ['address','gender'])
         Client.objects.bulk_create(clients_to_create)
         print('parsed clients: ' + str(len(clients_to_create)))
         print('updated clients: ' + str(len(clients_to_update)))
