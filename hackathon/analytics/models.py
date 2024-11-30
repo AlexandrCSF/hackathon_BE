@@ -1,3 +1,5 @@
 from django.db import models
 
-# Create your models here.
+
+class Template(models.Model):
+    template = models.CharField()

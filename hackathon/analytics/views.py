@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from analytics.models import Template
 from data.models import TVShow, Client, Channel, Viewing
 
 
@@ -109,12 +111,12 @@ class MostViewedTVShowsFileView(BaseMostViewedTVShowsView):
         # return FileResponse(open('123.csv', 'rb'), as_attachment=True)
         return Response({'link': "https://freedom-lens.ru/static/123.csv"}, status=status.HTTP_200_OK)
 
+
 class RequestEmailSerializer(RequestSerializer):
     email = serializers.CharField()
 
 
 class MostViewedTVShowsEmailView(BaseMostViewedTVShowsView):
-
     serializer = RequestEmailSerializer
 
     def post(self, request, *args, **kwargs):
@@ -162,3 +164,19 @@ class UserWatchedChannelView(generics.GenericAPIView):
             },
             status=200
         )
+
+
+class TemplatesView(generics.GenericAPIView):
+    def get(self, request):
+        templates = Template.objects.values_list('template', flat=True)
+        templates = [json.loads(t) for t in templates]
+
+        return Response({'templates': RequestSerializer(templates, many=True).data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = RequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.data
+
+        Template.objects.get_or_create(template=json.dumps(data))
+        return Response({}, status=status.HTTP_200_OK)

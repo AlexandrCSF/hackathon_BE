@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'parsers',
     'data',
     'django_extensions',
+    'analytics',
 ]
 
 MIDDLEWARE = [
