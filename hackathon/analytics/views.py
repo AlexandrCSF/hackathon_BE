@@ -18,7 +18,12 @@ class RequestSerializer(serializers.Serializer):
     age_max = serializers.IntegerField(required=False)
     age_min = serializers.IntegerField(required=False)
     categories = serializers.ListSerializer(child=serializers.CharField(), required=False)
-    sort_by_choices = ['most_watched, watch_time', 'start_time']
+    sort_by_choices = [
+        ('most_watched', 'Most Watched'),
+        ('watch_time', 'Watch Time'),
+        ('start_time', 'Start Time'),
+        ('name', 'Name')
+    ]
     sort_by = serializers.ChoiceField(choices=sort_by_choices, required=False)
 
 
@@ -67,14 +72,15 @@ class BaseMostViewedTVShowsView(APIView):
 
         tv_shows = tv_shows.annotate(view_count=Count('viewing', filter=q))
 
-        if data.get('sort_by') == 'name':
-            tv_shows = tv_shows.order_by('name')
-        elif data.get('sort_by') == 'view_count':
+        sort_by = data.get('sort_by')
+        if sort_by == 'most_watched':
             tv_shows = tv_shows.order_by('-view_count')
-        elif data.get('sort_by') == 'start_time':
+        elif sort_by == 'watch_time':
+            tv_shows = tv_shows.order_by('viewing__duration')
+        elif sort_by == 'start_time':
             tv_shows = tv_shows.order_by('viewing__start_time')
         else:
-            tv_shows = tv_shows.order_by('-view_count')
+            tv_shows = tv_shows.order_by('name')
 
         tv_shows = tv_shows[:50]
 
