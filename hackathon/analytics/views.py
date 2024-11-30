@@ -80,7 +80,7 @@ class BaseMostViewedTVShowsView(APIView):
         elif sort_by == 'start_time':
             tv_shows = tv_shows.order_by('viewing__start_time')
         else:
-            tv_shows = tv_shows.order_by('name')
+            tv_shows = tv_shows.order_by('-view_count')
 
         tv_shows = tv_shows[:50]
 
