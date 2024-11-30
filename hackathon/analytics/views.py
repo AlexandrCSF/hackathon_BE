@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q, Count, F
 from django.db.models import Sum
 from rest_framework import generics
@@ -40,8 +41,10 @@ class ResponseSerializer(serializers.Serializer):
 
 
 class BaseMostViewedTVShowsView(APIView):
+    serializer = RequestSerializer
+
     def get_data(self, request):
-        serializer = RequestSerializer(data=request.data)
+        serializer = self.serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.data
         tv_shows = TVShow.objects.all()
@@ -105,6 +108,36 @@ class MostViewedTVShowsFileView(BaseMostViewedTVShowsView):
             file.write(content)
         # return FileResponse(open('123.csv', 'rb'), as_attachment=True)
         return Response({'link': "https://freedom-lens.ru/static/123.csv"}, status=status.HTTP_200_OK)
+
+class RequestEmailSerializer(serializers.Serializer):
+    email = serializers.CharField()
+
+
+class MostViewedTVShowsEmailView(BaseMostViewedTVShowsView):
+
+    serializer = RequestEmailSerializer
+
+    def post(self, request, *args, **kwargs):
+        data = self.get_data(request)
+        content = ';'.join(data['tv_shows'][0].keys())
+        for tv_show in data['tv_shows']:
+            content += '\n'
+            content += ';'.join([str(v) for v in tv_show.values()])  # формат даты не как в исходных csv
+        # with open(settings.STATICFILES_DIRS[0] / '123.csv', 'w') as file:
+        #     file.write(content)
+
+        email_message = EmailMultiAlternatives(
+            'Your most viewed TV shows report',
+            f'',
+            settings.DEFAULT_FROM_EMAIL,
+            [request.data['email']]
+        )
+        # with open(file_path, 'rb') as f:
+        #     email.attach(file_path.split('/')[-1], f.read(), 'application/octet-stream')
+        email_message.attach('report.csv', content, 'text/csv')
+        email_message.send()
+
+        return Response({}, status=status.HTTP_200_OK)
 
 
 class UserWatchedChannelView(generics.GenericAPIView):
